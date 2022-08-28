@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+   
+<script>
+  var doc = document;
+  var head = doc.head || doc.getElementsByTagName('head')[0];
+  var style = document.createElement('style');
+  head.appendChild(style);
+  
+  function gotMessage (evt) {
+    //console.log(evt);
+    //console.log(evt.origin)
+    
+    var data = evt.data
+    if(data[0] === "html"){
+      emptyDiv(document.body)
+      document.body.insertAdjacentHTML('beforeend', data[1])
+      parseHtml(data[1])
+    }
+    
+    if(data[0] === "css"){
+      head.removeChild(style)
+      style = document.createElement('style');
+      head.appendChild(style);
+		  var n = document.createTextNode(data[1])
+		  style.appendChild(n);
+		  console.log(style)
+    }
+    
+    if(data[0] === "js"){
+      console.log(data[1])
+      var arr = data[1]
+      var s =""
+      for(var x =0; x < arr.length; x++){
+        s += arr[x]
+      }
+      createScript(s)
+    }
+  }
+
+  if (window.addEventListener) {
+    // For standards-compliant web browsers
+    window.addEventListener("message", gotMessage, false);
+  } else {
+    window.attachEvent("onmessage", gotMessage);
+  }
+  
+  function createScript(src){
+  	emptyNamedEle(head,"stuff");
+  	var s = document.createElement("script");
+  	s.name ="stuff"
+  	s.innerHTML = src;
+  	head.appendChild(s)
+  	console.log(head.children.length)
+  }
+  
+  
+  function emptyDiv(div){
+    while(div.firstChild){
+      div.removeChild(div.firstChild);
+    }
+  }
+  
+  function emptyNamedEle(div,name){
+  	console.log(div.children)
+  	var list = div.children;
+  	for (let item of list) {
+  		console.log(item.name);
+  		if(item.name === name){
+  			item.remove()
+  		}
+  	}
+  }
+  
+  
+  var timer = new Date().getTime() / 1000
+function parseHtml(txt){
+	var t = new Date().getTime() / 1000
+  if(timer + 1 > t) return
+  timer = new Date().getTime() / 1000
+	var arr = findSubstrings(txt,"script");
+  var arr2 =[];
+  if(arr.length > 0){
+  	for(var x =0; x < arr.length; x++){
+  		var str = txt.substring(arr[x]-6,arr[x+1]+6)
+      arr2.push(str)
+      x++
+  	}
+  }
+  for(var x =0; x < arr2.length; x++){
+  	console.log(arr2[x])
+  	if(arr2[x].includes("src")){
+  		getSrc(arr2[x])
+  	}else{
+  	  console.log("do not put inline script in html")
+  		
+  	}
+  }
+}
+
+
+var scripts = []
+function getSrc(str){
+  
+	var src = str.split("<script")
+	src = src[1].split("></script")
+	src = src[0].split("src=")
+	
+	src = src[1].split("\"");
+	if(scripts.indexOf(src[1]) === -1){
+	  console.log(scripts)
+	  loadJS(src[1],head)
+	  scripts.push(src[1])
+	}
+	
+	//console.log(head)
+}
+
+//loads js scripts with src in html area.
+var loadJS = function(url, location, implementationCode){
+    //url is URL of external file, implementationCode is the code
+    //to be called from the file, location is the location to
+    //insert the <script> element
+
+    var scriptTag = document.createElement('script');
+    scriptTag.src = url;
+	scriptTag.onload = implementationCode;
+    scriptTag.onreadystatechange = implementationCode;
+	location.appendChild(scriptTag);
+};
+
+//https://stackoverflow.com/questions/56446308/get-all-occurrences-of-a-substring-in-a-very-big-string
+function findSubstrings(str,searchKeyword){
+
+  var startingIndices = [];
+
+  var indexOccurence = str.indexOf(searchKeyword, 0);
+
+  while(indexOccurence >= 0) {
+      startingIndices.push(indexOccurence);
+			indexOccurence = str.indexOf(searchKeyword, indexOccurence + 1);
+  }
+	console.log(startingIndices)
+  return startingIndices;
+}
+</script>
+   
+</head>
+<body>
+	
+</body>
+</html>
